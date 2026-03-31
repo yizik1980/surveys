@@ -30,12 +30,12 @@ npm run dev
 ```
 
 - Client: http://localhost:5173
-- Server API: http://localhost:3003/api
+- Server API: http://localhost:3001/api
 
 ## יצירת משתמש מנהל ראשון
 
 ```bash
-curl -X POST http://localhost:3003/api/auth/register \
+curl -X POST http://localhost:3001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "מנהל",

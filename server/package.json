@@ -4,6 +4,7 @@
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
+    "debug": "nest start --watch --debug",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts"
   },

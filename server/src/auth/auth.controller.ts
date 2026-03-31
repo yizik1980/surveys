@@ -18,9 +18,14 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Post('admin/login')
+  loginAdmin(@Body() dto: LoginDto) {
+    return this.authService.loginAdmin(dto);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   getMe(@Request() req) {
-    return this.authService.getMe(req.user.id);
+    return this.authService.getMe(req.user.id, req.user.role);
   }
 }

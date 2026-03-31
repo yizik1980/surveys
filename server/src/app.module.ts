@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { AdminModule } from './admin/admin.module';
 import { SurveysModule } from './surveys/surveys.module';
 import { ResponsesModule } from './responses/responses.module';
 import { EmailModule } from './email/email.module';
@@ -15,6 +16,7 @@ import { EmailModule } from './email/email.module';
     ),
     AuthModule,
     UsersModule,
+    AdminModule,
     SurveysModule,
     ResponsesModule,
     EmailModule,

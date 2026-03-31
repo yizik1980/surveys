@@ -2,7 +2,7 @@ import axios from 'axios';
 import { authToken, clearAuth } from '../store/signals';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:3001/api',
   headers: { 'Content-Type': 'application/json' },
 });
 

@@ -22,5 +22,7 @@ export const authApi = {
   register: (data: RegisterData) => api.post('/auth/register', data),
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
+  adminLogin: (email: string, password: string) =>
+    api.post('/auth/admin/login', { email, password }),
   getMe: () => api.get('/auth/me'),
 };
