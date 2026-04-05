@@ -14,8 +14,32 @@ const QUESTION_TYPES = [
   { value: 'radio', label: 'בחירה יחידה' },
   { value: 'checkbox', label: 'בחירה מרובה' },
   { value: 'select', label: 'רשימה נפתחת' },
+  { value: 'autocomplete', label: 'השלמה אוטומטית' },
   { value: 'rating', label: 'דירוג (1-5)' },
   { value: 'date', label: 'תאריך' },
+];
+
+const PRESET_QUESTIONS: Omit<Question, 'id'>[] = [
+  {
+    type: 'autocomplete',
+    text: 'מהי עיר מגוריך?',
+    options: [],
+    required: true,
+    placeholder: 'התחל להקליד עיר...',
+  },
+  {
+    type: 'radio',
+    text: 'מהו מינך?',
+    options: ['זכר', 'נקבה', 'אחר'],
+    required: true,
+  },
+  {
+    type: 'text',
+    text: 'מהו גילך?',
+    options: [],
+    required: true,
+    placeholder: 'הקלד את גילך',
+  },
 ];
 
 function newQuestion(): Question {
@@ -75,6 +99,12 @@ export default function SurveyBuilder() {
 
   const handleAddQuestion = () => {
     const q = newQuestion();
+    addQuestion(q);
+    setActiveQIdx(questions.length);
+  };
+
+  const handleAddPreset = (preset: Omit<Question, 'id'>) => {
+    const q: Question = { ...preset, id: Math.random().toString(36).slice(2) };
     addQuestion(q);
     setActiveQIdx(questions.length);
   };
@@ -151,6 +181,34 @@ export default function SurveyBuilder() {
             />
           </div>
         </div>
+
+        {/* Display mode toggle */}
+        <div>
+          <label className="label">סוג תצוגת הסקר</label>
+          <div className="grid grid-cols-2 gap-3 mt-1">
+            {([
+              { value: 'compact', icon: '☰', title: 'מרוכז', desc: 'כל השאלות בדף אחד' },
+              { value: 'focused', icon: '◎', title: 'ממוקד', desc: 'שאלה אחת בכל פעם' },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { currentSurvey.value = { ...survey, displayMode: opt.value }; surveyBuilderDirty.value = true; }}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 text-right transition-all ${
+                  (survey.displayMode || 'compact') === opt.value
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                }`}
+              >
+                <span className="text-2xl">{opt.icon}</span>
+                <div>
+                  <p className="font-semibold text-sm">{opt.title}</p>
+                  <p className="text-xs text-gray-400">{opt.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Questions */}
@@ -193,6 +251,27 @@ export default function SurveyBuilder() {
         )}
       </div>
 
+      {/* Preset questions */}
+      <div className="card bg-gray-50 border border-gray-200">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">שאלות מוכנות</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { preset: PRESET_QUESTIONS[0], icon: '🏙️', label: 'עיר מגורים' },
+            { preset: PRESET_QUESTIONS[1], icon: '👤', label: 'מין' },
+            { preset: PRESET_QUESTIONS[2], icon: '🔢', label: 'גיל' },
+          ].map(({ preset, icon, label }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => handleAddPreset(preset)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 hover:border-indigo-400 hover:text-indigo-600 rounded-lg text-sm text-gray-700 transition-colors"
+            >
+              {icon} {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button
         onClick={handleAddQuestion}
         className="w-full py-3 border-2 border-dashed border-indigo-300 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-colors font-medium"
@@ -212,6 +291,7 @@ function QuestionCard({
   canMoveUp: boolean; canMoveDown: boolean; onMoveUp: () => void; onMoveDown: () => void;
 }) {
   const hasOptions = ['radio', 'checkbox', 'select'].includes(question.type);
+  const isAutocomplete = question.type === 'autocomplete';
 
   return (
     <div className={`card border-2 transition-all ${isActive ? 'border-indigo-400' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -320,6 +400,12 @@ function QuestionCard({
                 onChange={(e) => onUpdate({ options: e.target.value.split('\n').filter(Boolean) })}
                 onClick={(e) => e.stopPropagation()}
               />
+            </div>
+          )}
+
+          {isAutocomplete && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 text-sm text-blue-700">
+              🏙️ מאגר ערים ישראלי — 1,204 ערים (נטען אוטומטית)
             </div>
           )}
         </div>

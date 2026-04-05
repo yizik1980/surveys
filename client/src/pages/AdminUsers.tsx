@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { usersApi } from '../api/users';
 import { showToast } from '../store/signals';
+import Dialog from '../components/Dialog';
 
 interface User {
   _id: string;
@@ -128,9 +129,7 @@ export default function AdminUsers() {
             <tbody>
               {users.map((u) => (
                 <tr key={u._id} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="py-3 font-medium text-gray-900">
-                    {u.firstName} {u.lastName}
-                  </td>
+                  <td className="py-3 font-medium text-gray-900">{u.firstName} {u.lastName}</td>
                   <td className="py-3 text-gray-600 font-mono text-xs">{u.email}</td>
                   <td className="py-3 text-gray-500 text-xs" dir="ltr">{u.phone}</td>
                   <td className="py-3">
@@ -144,24 +143,14 @@ export default function AdminUsers() {
                   </td>
                   <td className="py-3">
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditUser(u)}
-                        className="text-xs text-indigo-600 hover:underline"
-                      >
-                        ערוך
-                      </button>
+                      <button onClick={() => setEditUser(u)} className="text-xs text-indigo-600 hover:underline">ערוך</button>
                       <button
                         onClick={() => handleToggleActive(u)}
                         className={`text-xs ${u.isActive ? 'text-orange-500' : 'text-green-600'} hover:underline`}
                       >
                         {u.isActive ? 'השבת' : 'הפעל'}
                       </button>
-                      <button
-                        onClick={() => handleDelete(u._id)}
-                        className="text-xs text-red-500 hover:underline"
-                      >
-                        מחק
-                      </button>
+                      <button onClick={() => handleDelete(u._id)} className="text-xs text-red-500 hover:underline">מחק</button>
                     </div>
                   </td>
                 </tr>
@@ -232,48 +221,39 @@ function UserFormModal({
   });
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">
-              {user ? 'עריכת משתמש' : 'משתמש חדש'}
-            </h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+    <Dialog title={user ? 'עריכת משתמש' : 'משתמש חדש'} onClose={onClose} size="xl">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="label">שם פרטי</label><input className="input" {...F('firstName')} /></div>
+          <div><label className="label">שם משפחה</label><input className="input" {...F('lastName')} /></div>
+          <div><label className="label">אימייל</label><input className="input" type="email" dir="ltr" {...F('email')} /></div>
+          <div><label className="label">טלפון</label><input className="input" dir="ltr" {...F('phone')} /></div>
+          <div>
+            <label className="label">סיסמה {user && '(השאר ריק לאי-שינוי)'}</label>
+            <input className="input" type="password" {...F('password')} />
           </div>
+          <div>
+            <label className="label">תפקיד</label>
+            <select className="input" {...F('role')}>
+              <option value="surveyed">נסקר</option>
+              <option value="surveyor">סוקר</option>
+              <option value="admin">מנהל</option>
+            </select>
+          </div>
+          <div><label className="label">חברה</label><input className="input" {...F('companyName')} /></div>
+          <div><label className="label">תפקיד מקצועי</label><input className="input" {...F('jobTitle')} /></div>
+          <div className="col-span-2"><label className="label">רחוב</label><input className="input" {...F('street')} /></div>
+          <div><label className="label">עיר</label><input className="input" {...F('city')} /></div>
+          <div><label className="label">מיקוד</label><input className="input" dir="ltr" {...F('zipCode')} /></div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="label">שם פרטי</label><input className="input" {...F('firstName')} /></div>
-            <div><label className="label">שם משפחה</label><input className="input" {...F('lastName')} /></div>
-            <div><label className="label">אימייל</label><input className="input" type="email" dir="ltr" {...F('email')} /></div>
-            <div><label className="label">טלפון</label><input className="input" dir="ltr" {...F('phone')} /></div>
-            <div>
-              <label className="label">סיסמה {user && '(השאר ריק לאי-שינוי)'}</label>
-              <input className="input" type="password" {...F('password')} />
-            </div>
-            <div>
-              <label className="label">תפקיד</label>
-              <select className="input" {...F('role')}>
-                <option value="surveyed">נסקר</option>
-                <option value="surveyor">סוקר</option>
-                <option value="admin">מנהל</option>
-              </select>
-            </div>
-            <div><label className="label">חברה</label><input className="input" {...F('companyName')} /></div>
-            <div><label className="label">תפקיד מקצועי</label><input className="input" {...F('jobTitle')} /></div>
-            <div className="col-span-2"><label className="label">רחוב</label><input className="input" {...F('street')} /></div>
-            <div><label className="label">עיר</label><input className="input" {...F('city')} /></div>
-            <div><label className="label">מיקוד</label><input className="input" dir="ltr" {...F('zipCode')} /></div>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button onClick={onClose} className="btn-secondary flex-1">ביטול</button>
-            <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
-              {saving ? 'שומר...' : 'שמור'}
-            </button>
-          </div>
+        <div className="flex gap-3 pt-2">
+          <button onClick={onClose} className="btn-secondary flex-1">ביטול</button>
+          <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
+            {saving ? 'שומר...' : 'שמור'}
+          </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

@@ -3,12 +3,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../users/users.service';
 import { AdminService } from '../admin/admin.service';
+import { SurveyorsService } from '../surveyors/surveyors.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private usersService: UsersService,
     private adminService: AdminService,
+    private surveyorsService: SurveyorsService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -25,6 +27,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       } catch {
         throw new UnauthorizedException();
       }
+    } else if (payload.role === 'surveyor') {
+      const surveyor = await this.surveyorsService.findById(payload.sub);
+      if (!surveyor || !surveyor.isActive) throw new UnauthorizedException();
     } else {
       const user = await this.usersService.findById(payload.sub);
       if (!user || !user.isActive) throw new UnauthorizedException();

@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { randomBytes } from 'crypto';
 import { Survey, SurveyDocument, SurveyStatus } from './survey.schema';
 import { CreateSurveyDto } from './dto/create-survey.dto';
@@ -19,13 +19,19 @@ export class SurveysService {
   ) {}
 
   async create(dto: CreateSurveyDto, creatorId: string): Promise<SurveyDocument> {
-    const survey = new this.surveyModel({ ...dto, creator: creatorId });
+    const questions = (dto.questions ?? []).filter((q) => q.text?.trim());
+    const survey = new this.surveyModel({ ...dto, questions, creator: creatorId });
     return survey.save();
   }
 
   async findAll(userId: string, role: string, filters?: any) {
     const query: any = {};
-    if (role === 'surveyor') query.creator = userId;
+    if (role === 'surveyor') {
+      query.$or = [
+        { creator: new Types.ObjectId(userId) },
+        { 'creator._id': userId },
+      ];
+    }
     if (filters?.status) query.status = filters.status;
     if (filters?.search) {
       query.title = { $regex: filters.search, $options: 'i' };
@@ -67,15 +73,22 @@ export class SurveysService {
     role: string,
   ): Promise<SurveyDocument> {
     const survey = await this.findById(id);
-    if (role !== 'admin' && survey.creator.toString() !== userId) {
+    const creatorId = (survey.creator as any)?._id?.toString() ?? survey.creator.toString();
+    if (role !== 'admin' && creatorId !== userId) {
       throw new ForbiddenException('אין הרשאה לערוך סקר זה');
     }
-    return this.surveyModel.findByIdAndUpdate(id, dto, { new: true });
+    const { creator: _creator, ...rest } = dto as any;
+    const payload = { ...rest };
+    if (Array.isArray(payload.questions)) {
+      payload.questions = payload.questions.filter((q) => q.text?.trim());
+    }
+    return this.surveyModel.findByIdAndUpdate(id, payload, { new: true });
   }
 
   async remove(id: string, userId: string, role: string): Promise<void> {
     const survey = await this.findById(id);
-    if (role !== 'admin' && survey.creator.toString() !== userId) {
+    const creatorId = (survey.creator as any)?._id?.toString() ?? survey.creator.toString();
+    if (role !== 'admin' && creatorId !== userId) {
       throw new ForbiddenException('אין הרשאה למחוק סקר זה');
     }
     await this.surveyModel.findByIdAndDelete(id);
@@ -88,7 +101,8 @@ export class SurveysService {
     role: string,
   ) {
     const survey = await this.findById(id);
-    if (role !== 'admin' && survey.creator.toString() !== userId) {
+    const creatorId = (survey.creator as any)?._id?.toString() ?? survey.creator.toString();
+    if (role !== 'admin' && creatorId !== userId) {
       throw new ForbiddenException('אין הרשאה לשייך סקר זה');
     }
 
@@ -123,7 +137,7 @@ export class SurveysService {
   }
 
   async getStats(userId: string, role: string) {
-    const query: any = role === 'admin' ? {} : { creator: userId };
+    const query: any = role === 'admin' ? {} : { creator: new Types.ObjectId(userId) };
     const total = await this.surveyModel.countDocuments(query);
     const byStatus = await this.surveyModel.aggregate([
       { $match: query },

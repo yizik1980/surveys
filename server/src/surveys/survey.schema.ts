@@ -11,6 +11,7 @@ export enum QuestionType {
   SELECT = 'select',
   RATING = 'rating',
   DATE = 'date',
+  AUTOCOMPLETE = 'autocomplete',
 }
 
 export enum SurveyStatus {
@@ -78,7 +79,7 @@ export class Survey {
   @Prop()
   description?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Surveyor', required: true })
   creator: Types.ObjectId;
 
   @Prop({ type: [Question], default: [] })
@@ -95,6 +96,9 @@ export class Survey {
 
   @Prop()
   category?: string;
+
+  @Prop({ type: String, enum: ['compact', 'focused'], default: 'compact' })
+  displayMode: 'compact' | 'focused';
 }
 
 export const SurveySchema = SchemaFactory.createForClass(Survey);

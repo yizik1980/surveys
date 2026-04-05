@@ -1,13 +1,37 @@
 import { useEffect, useState } from 'react';
 import { surveysApi } from '../api/surveys';
-import { showToast } from '../store/signals';
-import type { Survey, AssignedUser } from '../store/signals';
+import type { Survey } from '../store/signals';
 import AssignModal from '../components/survey/AssignModal';
 
 interface ResponseStats {
   total: number;
   assigned: number;
   responseRate: number;
+}
+
+function CopyLinkButton({ token }: { token: string }) {
+  const [copied, setCopied] = useState(false);
+  const link = `${window.location.origin}/survey/${token}`;
+
+  const copy = () => {
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={copy}
+      title={link}
+      className={`text-xs px-2 py-1 rounded-lg border transition-colors ${
+        copied
+          ? 'bg-green-50 border-green-300 text-green-700'
+          : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600'
+      }`}
+    >
+      {copied ? '✓ הועתק' : '🔗 קישור'}
+    </button>
+  );
 }
 
 export default function CRM() {
@@ -176,6 +200,7 @@ export default function CRM() {
                           <th className="text-right pb-2 font-medium">סטטוס</th>
                           <th className="text-right pb-2 font-medium">נשלח</th>
                           <th className="text-right pb-2 font-medium">הגיב</th>
+                          <th className="pb-2"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -195,6 +220,9 @@ export default function CRM() {
                             </td>
                             <td className="py-2.5 text-gray-400 text-xs">
                               {u.respondedAt ? new Date(u.respondedAt).toLocaleDateString('he-IL') : '—'}
+                            </td>
+                            <td className="py-2.5">
+                              <CopyLinkButton token={u.token} />
                             </td>
                           </tr>
                         ))}

@@ -24,4 +24,8 @@ export class CreateSurveyDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsEnum(['compact', 'focused'])
+  displayMode?: 'compact' | 'focused';
 }

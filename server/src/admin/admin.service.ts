@@ -2,15 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Admin, AdminDocument } from './admin.schema';
-import { UsersService } from '../users/users.service';
-import { UserRole } from '../users/user.schema';
-import { CreateSurveyorDto } from './dto/create-surveyor.dto';
+import { SurveyorsService } from '../surveyors/surveyors.service';
+import { CreateSurveyorDto } from '../surveyors/dto/create-surveyor.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
-    private usersService: UsersService,
+    private surveyorsService: SurveyorsService,
   ) {}
 
   async findByEmail(email: string): Promise<AdminDocument | null> {
@@ -23,24 +22,29 @@ export class AdminService {
     return admin;
   }
 
-  // Surveyors CRM
+  // ─── Surveyors CRUD (delegated to SurveyorsService) ───────────────────────
+
   getSurveyors(search?: string) {
-    return this.usersService.findAll({ role: UserRole.SURVEYOR, search });
+    return this.surveyorsService.findAll(search);
   }
 
   getSurveyor(id: string) {
-    return this.usersService.findById(id);
+    return this.surveyorsService.findById(id);
   }
 
   createSurveyor(dto: CreateSurveyorDto) {
-    return this.usersService.create({ ...dto, role: UserRole.SURVEYOR });
+    return this.surveyorsService.create(dto);
   }
 
   updateSurveyor(id: string, dto: Partial<CreateSurveyorDto>) {
-    return this.usersService.update(id, dto);
+    return this.surveyorsService.update(id, dto);
   }
 
   deleteSurveyor(id: string) {
-    return this.usersService.remove(id);
+    return this.surveyorsService.remove(id);
+  }
+
+  getSurveyorStats() {
+    return this.surveyorsService.getStats();
   }
 }

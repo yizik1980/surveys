@@ -21,7 +21,7 @@ export interface User {
 
 export interface Question {
   id: string;
-  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'rating' | 'date';
+  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'rating' | 'date' | 'autocomplete';
   text: string;
   options: string[];
   required: boolean;
@@ -41,6 +41,7 @@ export interface Survey {
   category?: string;
   expiresAt?: string;
   createdAt: string;
+  displayMode?: 'compact' | 'focused';
 }
 
 export interface AssignedUser {

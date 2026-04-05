@@ -7,6 +7,7 @@ import Toast from './components/Toast';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import SurveyorRegister from './pages/SurveyorRegister';
 import Dashboard from './pages/Dashboard';
 import SurveyList from './pages/SurveyList';
 import SurveyBuilder from './pages/SurveyBuilder';
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/register/surveyor" element={<SurveyorRegister />} />
         <Route path="/survey/:token" element={<SurveyResponse />} />
 
         {/* Admin */}

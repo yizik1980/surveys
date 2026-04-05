@@ -5,6 +5,15 @@ import { useSignals } from '@preact/signals-react/runtime';
 import { adminApi, SurveyorData } from '../api/admin';
 import { currentUser, clearAuth, showToast, toastMessage, isAdmin } from '../store/signals';
 import Toast from '../components/Toast';
+import Dialog from '../components/Dialog';
+
+interface Subscription {
+  plan?: 'monthly' | 'annual';
+  status?: 'trial' | 'active' | 'inactive' | 'cancelled';
+  pricePerMonth?: number;
+  startDate?: string;
+  endDate?: string;
+}
 
 interface Surveyor {
   _id: string;
@@ -15,9 +24,24 @@ interface Surveyor {
   companyName?: string;
   jobTitle?: string;
   isActive: boolean;
+  subscription?: Subscription;
 }
 
 type ModalMode = 'create' | 'edit';
+
+const PLAN_LABEL: Record<string, string> = { monthly: 'חודשי', annual: 'שנתי' };
+const STATUS_LABEL: Record<string, string> = {
+  trial: 'ניסיון',
+  active: 'פעיל',
+  inactive: 'לא פעיל',
+  cancelled: 'בוטל',
+};
+const STATUS_COLOR: Record<string, string> = {
+  trial: 'bg-yellow-100 text-yellow-700',
+  active: 'bg-green-100 text-green-700',
+  inactive: 'bg-gray-200 text-gray-500',
+  cancelled: 'bg-red-100 text-red-600',
+};
 
 export default function AdminSurveyors() {
   useSignals();
@@ -29,7 +53,8 @@ export default function AdminSurveyors() {
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<SurveyorData>();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<SurveyorData>();
+  const watchedPlan = watch('subscription.plan');
 
   useEffect(() => {
     if (!isAdmin.value) navigate('/admin', { replace: true });
@@ -54,12 +79,27 @@ export default function AdminSurveyors() {
   }, [search]);
 
   function openCreate() {
-    reset({ firstName: '', lastName: '', email: '', password: '', phone: '', companyName: '', jobTitle: '' });
+    reset({
+      firstName: '', lastName: '', email: '', password: '', phone: '',
+      companyName: '', jobTitle: '',
+      subscription: { plan: 'monthly', status: 'trial', pricePerMonth: 0 },
+    });
     setModal({ mode: 'create' });
   }
 
   function openEdit(s: Surveyor) {
-    reset({ firstName: s.firstName, lastName: s.lastName, email: s.email, password: '', phone: s.phone, companyName: s.companyName ?? '', jobTitle: s.jobTitle ?? '' });
+    reset({
+      firstName: s.firstName, lastName: s.lastName, email: s.email,
+      password: '', phone: s.phone,
+      companyName: s.companyName ?? '', jobTitle: s.jobTitle ?? '',
+      subscription: {
+        plan: s.subscription?.plan ?? 'monthly',
+        status: s.subscription?.status ?? 'trial',
+        pricePerMonth: s.subscription?.pricePerMonth ?? 0,
+        startDate: s.subscription?.startDate?.slice(0, 10) ?? '',
+        endDate: s.subscription?.endDate?.slice(0, 10) ?? '',
+      },
+    });
     setModal({ mode: 'edit', surveyor: s });
   }
 
@@ -101,6 +141,14 @@ export default function AdminSurveyors() {
     navigate('/admin');
   }
 
+  // Monthly equivalent price for display
+  const monthlyPrice = (s: Surveyor) => {
+    const p = s.subscription?.pricePerMonth ?? 0;
+    if (!p) return null;
+    if (s.subscription?.plan === 'annual') return `₪${(p * 12).toLocaleString()} / שנה`;
+    return `₪${p.toLocaleString()} / חודש`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white" dir="rtl">
       {toastMessage.value && <Toast />}
@@ -111,7 +159,7 @@ export default function AdminSurveyors() {
           <span className="text-2xl">🛡️</span>
           <div>
             <h1 className="font-bold text-lg leading-none">ממשק ניהול</h1>
-            <p className="text-gray-400 text-xs mt-0.5">ניהול סוקרים</p>
+            <p className="text-gray-400 text-xs mt-0.5">ניהול סוקרים ומנויים</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -127,12 +175,12 @@ export default function AdminSurveyors() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-6 gap-4">
           <input
             type="text"
-            placeholder="חיפוש סוקר לפי שם, אימייל..."
+            placeholder="חיפוש לפי שם, אימייל, חברה..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 max-w-sm px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -158,27 +206,45 @@ export default function AdminSurveyors() {
             <table className="w-full text-sm">
               <thead className="bg-gray-700/50 text-gray-300 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-right px-6 py-3">שם</th>
-                  <th className="text-right px-6 py-3">אימייל</th>
-                  <th className="text-right px-6 py-3">טלפון</th>
-                  <th className="text-right px-6 py-3">חברה</th>
-                  <th className="text-right px-6 py-3">תפקיד</th>
-                  <th className="px-6 py-3"></th>
+                  <th className="text-right px-5 py-3">שם</th>
+                  <th className="text-right px-5 py-3">אימייל</th>
+                  <th className="text-right px-5 py-3">טלפון</th>
+                  <th className="text-right px-5 py-3">חברה</th>
+                  <th className="text-right px-5 py-3">תוכנית</th>
+                  <th className="text-right px-5 py-3">סטטוס מנוי</th>
+                  <th className="text-right px-5 py-3">עלות</th>
+                  <th className="px-5 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
                 {surveyors.map((s) => (
                   <tr key={s._id} className="hover:bg-gray-700/30 transition-colors">
-                    <td className="px-6 py-4 font-medium">
+                    <td className="px-5 py-4 font-medium">
                       {s.firstName} {s.lastName}
                     </td>
-                    <td className="px-6 py-4 text-gray-300 dir-ltr text-right" dir="ltr">
+                    <td className="px-5 py-4 text-gray-300 font-mono text-xs" dir="ltr">
                       {s.email}
                     </td>
-                    <td className="px-6 py-4 text-gray-300" dir="ltr">{s.phone}</td>
-                    <td className="px-6 py-4 text-gray-300">{s.companyName || '—'}</td>
-                    <td className="px-6 py-4 text-gray-300">{s.jobTitle || '—'}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4 text-gray-300 text-xs" dir="ltr">{s.phone}</td>
+                    <td className="px-5 py-4 text-gray-300">{s.companyName || '—'}</td>
+                    <td className="px-5 py-4">
+                      {s.subscription?.plan ? (
+                        <span className="bg-indigo-900/50 text-indigo-300 text-xs px-2 py-1 rounded-full">
+                          {PLAN_LABEL[s.subscription.plan]}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className="px-5 py-4">
+                      {s.subscription?.status ? (
+                        <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLOR[s.subscription.status]}`}>
+                          {STATUS_LABEL[s.subscription.status]}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className="px-5 py-4 text-gray-300 text-xs">
+                      {monthlyPrice(s) || '—'}
+                    </td>
+                    <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openEdit(s)}
@@ -205,12 +271,18 @@ export default function AdminSurveyors() {
 
       {/* Create / Edit Modal */}
       {modal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4" dir="rtl">
-          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
-            <h2 className="text-lg font-bold mb-5">
-              {modal.mode === 'create' ? 'יצירת סוקר חדש' : 'עריכת סוקר'}
-            </h2>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Dialog
+          title={modal.mode === 'create' ? 'יצירת סוקר חדש' : 'עריכת סוקר'}
+          onClose={() => setModal(null)}
+          size="xl"
+          variant="dark"
+        >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Personal details */}
+            <div>
+              <p className="text-xs uppercase tracking-wide text-gray-400 mb-3 border-b border-gray-700 pb-1">
+                פרטים אישיים
+              </p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-300 mb-1">שם פרטי</label>
@@ -230,7 +302,7 @@ export default function AdminSurveyors() {
                 </div>
               </div>
 
-              <div>
+              <div className="mt-3">
                 <label className="block text-sm text-gray-300 mb-1">אימייל</label>
                 <input
                   type="email"
@@ -244,7 +316,7 @@ export default function AdminSurveyors() {
                 {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
               </div>
 
-              <div>
+              <div className="mt-3">
                 <label className="block text-sm text-gray-300 mb-1">
                   סיסמה {modal.mode === 'edit' && <span className="text-gray-500 text-xs">(ריק = ללא שינוי)</span>}
                 </label>
@@ -259,17 +331,16 @@ export default function AdminSurveyors() {
                 {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-300 mb-1">טלפון</label>
-                <input
-                  dir="ltr"
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  {...register('phone', { required: 'שדה חובה' })}
-                />
-                {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4 mt-3">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">טלפון</label>
+                  <input
+                    dir="ltr"
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    {...register('phone', { required: 'שדה חובה' })}
+                  />
+                  {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>}
+                </div>
                 <div>
                   <label className="block text-sm text-gray-300 mb-1">חברה</label>
                   <input
@@ -285,36 +356,102 @@ export default function AdminSurveyors() {
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors"
-                >
-                  {saving ? 'שומר...' : modal.mode === 'create' ? 'יצירה' : 'שמירה'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModal(null)}
-                  className="flex-1 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
-                >
-                  ביטול
-                </button>
+            {/* Subscription */}
+            <div>
+              <p className="text-xs uppercase tracking-wide text-gray-400 mb-3 border-b border-gray-700 pb-1">
+                💳 פרטי מנוי
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">תוכנית</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    {...register('subscription.plan', { required: 'שדה חובה' })}
+                  >
+                    <option value="monthly">חודשי</option>
+                    <option value="annual">שנתי</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">סטטוס</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    {...register('subscription.status')}
+                  >
+                    <option value="trial">ניסיון</option>
+                    <option value="active">פעיל</option>
+                    <option value="inactive">לא פעיל</option>
+                    <option value="cancelled">בוטל</option>
+                  </select>
+                </div>
               </div>
-            </form>
-          </div>
-        </div>
+
+              <div className="mt-3">
+                <label className="block text-sm text-gray-300 mb-1">
+                  מחיר לחודש (₪)
+                  {watchedPlan === 'annual' && (
+                    <span className="text-gray-400 text-xs mr-2">
+                      — סה״כ שנתי: ₪{((Number(watch('subscription.pricePerMonth')) || 0) * 12).toLocaleString()}
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  {...register('subscription.pricePerMonth', { valueAsNumber: true })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">תאריך התחלה</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    {...register('subscription.startDate')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">תאריך סיום</label>
+                  <input
+                    type="date"
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    {...register('subscription.endDate')}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors"
+              >
+                {saving ? 'שומר...' : modal.mode === 'create' ? 'יצירה' : 'שמירה'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                className="flex-1 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+              >
+                ביטול
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
 
       {/* Delete Confirmation */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4" dir="rtl">
-          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
-            <p className="text-4xl mb-3">🗑️</p>
-            <h2 className="text-lg font-bold mb-2">מחיקת סוקר</h2>
-            <p className="text-gray-400 text-sm mb-6">פעולה זו אינה ניתנת לביטול.</p>
-            <div className="flex gap-3">
+        <Dialog title="מחיקת סוקר" onClose={() => setDeleteId(null)} size="sm" variant="dark">
+          <div className="text-center space-y-4">
+            <p className="text-4xl">🗑️</p>
+            <p className="text-gray-400 text-sm">פעולה זו אינה ניתנת לביטול.</p>
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={confirmDelete}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
@@ -329,7 +466,7 @@ export default function AdminSurveyors() {
               </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

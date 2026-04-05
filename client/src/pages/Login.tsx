@@ -17,7 +17,7 @@ export default function Login() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const res = await authApi.login(data.email, data.password);
+      const res = await authApi.surveyorLogin(data.email, data.password);
       setAuth(res.data.token, res.data.user);
       showToast('התחברת בהצלחה!', 'success');
       navigate('/dashboard');

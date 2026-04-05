@@ -22,6 +22,9 @@ export const authApi = {
   register: (data: RegisterData) => api.post('/auth/register', data),
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
+  surveyorRegister: (data: any) => api.post('/auth/surveyor/register', data),
+  surveyorLogin: (email: string, password: string) =>
+    api.post('/auth/surveyor/login', { email, password }),
   adminLogin: (email: string, password: string) =>
     api.post('/auth/admin/login', { email, password }),
   getMe: () => api.get('/auth/me'),

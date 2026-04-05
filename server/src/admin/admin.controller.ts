@@ -13,7 +13,7 @@ import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { CreateSurveyorDto } from './dto/create-surveyor.dto';
+import { CreateSurveyorDto } from '../surveyors/dto/create-surveyor.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -24,6 +24,11 @@ export class AdminController {
   @Get('surveyors')
   getSurveyors(@Query('search') search?: string) {
     return this.adminService.getSurveyors(search);
+  }
+
+  @Get('surveyors/stats')
+  getSurveyorStats() {
+    return this.adminService.getSurveyorStats();
   }
 
   @Get('surveyors/:id')

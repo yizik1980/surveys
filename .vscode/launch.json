@@ -5,14 +5,8 @@
       "name": "Server: Debug (watch)",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--require",
-        "ts-node/register",
-        "-e",
-        "require('@nestjs/cli/bin/nest.js')"
-      ],
-      "args": ["start", "--watch", "--preserveWatchOutput"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "debug"],
       "cwd": "${workspaceFolder}/server",
       "envFile": "${workspaceFolder}/server/.env",
       "sourceMaps": true,
@@ -23,7 +17,7 @@
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "restart": true
+      "skipFiles": ["<node_internals>/**"]
     },
     {
       "name": "Server: Attach (running process)",
@@ -50,13 +44,6 @@
       "cwd": "${workspaceFolder}/client",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Full Stack",
-      "configurations": ["Server: Debug (watch)"],
-      "stopAll": true
     }
   ]
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { surveysApi } from '../api/surveys';
 import type { Survey, Question } from '../store/signals';
+import { cities } from '../const/cities';
 
 type AnswerMap = Record<string, any>;
 
@@ -15,6 +16,7 @@ export default function SurveyResponse() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     if (!token) return;
@@ -43,23 +45,25 @@ export default function SurveyResponse() {
     setAnswer(qId, next);
   };
 
-  const validate = (): boolean => {
+  const validateQuestion = (q: Question): string => {
+    if (!q.required) return '';
+    const val = answers[q.id];
+    if (!val || (Array.isArray(val) && val.length === 0)) return 'שאלה זו היא חובה';
+    return '';
+  };
+
+  const validateAll = (): boolean => {
     const errs: Record<string, string> = {};
     for (const q of survey?.questions || []) {
-      if (q.required) {
-        const val = answers[q.id];
-        if (!val || (Array.isArray(val) && val.length === 0)) {
-          errs[q.id] = 'שאלה זו היא חובה';
-        }
-      }
+      const err = validateQuestion(q);
+      if (err) errs[q.id] = err;
     }
     setValidationErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const submitSurvey = async () => {
+    if (!validateAll()) return;
     setSubmitting(true);
     try {
       const answersList = Object.entries(answers).map(([questionId, value]) => ({
@@ -74,6 +78,24 @@ export default function SurveyResponse() {
       setSubmitting(false);
     }
   };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    submitSurvey();
+  };
+
+  const handleNext = () => {
+    const questions = survey?.questions || [];
+    const q = questions[currentStep];
+    const err = validateQuestion(q);
+    if (err) {
+      setValidationErrors((prev) => ({ ...prev, [q.id]: err }));
+      return;
+    }
+    setCurrentStep((s) => s + 1);
+  };
+
+  const handlePrev = () => setCurrentStep((s) => s - 1);
 
   if (loading) {
     return (
@@ -110,6 +132,88 @@ export default function SurveyResponse() {
     );
   }
 
+  const isFocused = survey?.displayMode === 'focused';
+  const questions = survey?.questions || [];
+
+  if (isFocused) {
+    const total = questions.length;
+    const q = questions[currentStep];
+    const isLast = currentStep === total - 1;
+    const progress = total > 0 ? ((currentStep + 1) / total) * 100 : 0;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-10 px-4" dir="rtl">
+        <div className="max-w-xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <span className="text-indigo-600 font-bold text-xl">📊 מערכת סקרים</span>
+          </div>
+
+          {/* Survey title */}
+          <div className="card mb-4">
+            <h1 className="text-xl font-bold text-gray-900">{survey?.title}</h1>
+            {survey?.description && (
+              <p className="text-gray-500 text-sm mt-1">{survey.description}</p>
+            )}
+            {recipientName && (
+              <p className="text-sm text-indigo-600 mt-1 font-medium">שלום, {recipientName}</p>
+            )}
+          </div>
+
+          {/* Progress */}
+          <div className="mb-4">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>שאלה {currentStep + 1} מתוך {total}</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Question card */}
+          <div className="card">
+            <QuestionField
+              question={q}
+              index={currentStep}
+              value={answers[q.id]}
+              error={validationErrors[q.id]}
+              onAnswer={(val) => setAnswer(q.id, val)}
+              onToggleCheckbox={(opt) => toggleCheckbox(q.id, opt)}
+            />
+          </div>
+
+          {/* Navigation */}
+          <div className="flex gap-3 mt-4">
+            {currentStep > 0 && (
+              <button type="button" onClick={handlePrev} className="btn-secondary flex-1 py-3">
+                → הקודם
+              </button>
+            )}
+            {!isLast ? (
+              <button type="button" onClick={handleNext} className="btn-primary flex-1 py-3">
+                הבא ←
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={submitSurvey}
+                disabled={submitting}
+                className="btn-primary flex-1 py-3 font-semibold"
+              >
+                {submitting ? 'שולח...' : 'שלח תשובות'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Compact mode (default)
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-10 px-4" dir="rtl">
       <div className="max-w-2xl mx-auto">
@@ -129,7 +233,7 @@ export default function SurveyResponse() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {survey?.questions?.map((q, idx) => (
+          {questions.map((q, idx) => (
             <QuestionField
               key={q.id}
               question={q}
@@ -161,7 +265,7 @@ function QuestionField({
   onAnswer: (v: any) => void; onToggleCheckbox: (opt: string) => void;
 }) {
   return (
-    <div className={`card ${error ? 'border border-red-300' : ''}`}>
+    <div className={error ? 'border border-red-300 rounded-xl p-1' : ''}>
       <p className="font-semibold text-gray-900 mb-3">
         <span className="text-indigo-500 ml-1">{index + 1}.</span>
         {question.text}
@@ -263,6 +367,24 @@ function QuestionField({
           value={value || ''}
           onChange={(e) => onAnswer(e.target.value)}
         />
+      )}
+
+      {question.type === 'autocomplete' && (
+        <>
+          <input
+            className="input"
+            list={`dl-${question.id}`}
+            placeholder={question.placeholder || 'התחל להקליד...'}
+            value={value || ''}
+            onChange={(e) => onAnswer(e.target.value)}
+            autoComplete="off"
+          />
+          <datalist id={`dl-${question.id}`}>
+            {cities.map((city) => (
+              <option key={city} value={city} />
+            ))}
+          </datalist>
+        </>
       )}
 
       {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
