@@ -16,6 +16,8 @@ import CRM from './pages/CRM';
 import AdminUsers from './pages/AdminUsers';
 import AdminLogin from './pages/AdminLogin';
 import AdminSurveyors from './pages/AdminSurveyors';
+import MySurveys from './pages/MySurveys';
+import SurveyedDashboard from './pages/SurveyedDashboard';
 
 function PrivateRoute({ children }: { children: ReactNode }) {
   useSignals();
@@ -32,7 +34,7 @@ function AdminRoute({ children }: { children: ReactNode }) {
 function SurveyorRoute({ children }: { children: ReactNode }) {
   useSignals();
   if (!isAuthenticated.value) return <Navigate to="/login" replace />;
-  if (!isSurveyor.value) return <Navigate to="/crm" replace />;
+  if (!isSurveyor.value) return <Navigate to="/my-surveys" replace />;
   return <>{children}</>;
 }
 
@@ -65,7 +67,7 @@ export default function App() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <><Navbar /><Dashboard /></>
+              <><Navbar />{isSurveyor.value ? <Dashboard /> : <SurveyedDashboard />}</>
             </PrivateRoute>
           }
         />
@@ -96,8 +98,16 @@ export default function App() {
         <Route
           path="/crm"
           element={
-            <PrivateRoute>
+            <SurveyorRoute>
               <><Navbar /><CRM /></>
+            </SurveyorRoute>
+          }
+        />
+        <Route
+          path="/my-surveys"
+          element={
+            <PrivateRoute>
+              <><Navbar /><MySurveys /></>
             </PrivateRoute>
           }
         />

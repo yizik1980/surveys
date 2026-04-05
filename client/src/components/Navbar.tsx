@@ -6,11 +6,12 @@ export default function Navbar() {
   useSignals();
   const navigate = useNavigate();
   const location = useLocation();
-
+  const crmActive = isSurveyor.value || isAdmin.value
   const links = [
-    { to: '/dashboard', label: 'לוח בקרה', show: true },
-    { to: '/surveys', label: 'סקרים', show: isSurveyor.value },
-    { to: '/crm', label: 'CRM', show: true },
+    { to: '/dashboard', label: 'לוח בקרה', show: crmActive },
+    { to: '/surveys', label: 'סקרים', show: crmActive },
+    { to: '/crm', label: 'CRM', show: crmActive },
+    { to: '/my-surveys', label: 'הסקרים שלי', show: !crmActive },
     { to: '/users', label: 'ניהול משתמשים', show: isAdmin.value },
   ];
 

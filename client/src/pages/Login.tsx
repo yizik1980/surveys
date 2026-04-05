@@ -20,7 +20,7 @@ export default function Login() {
       const res = await authApi.login(data.email, data.password);
       setAuth(res.data.token, res.data.user);
       showToast('התחברת בהצלחה!', 'success');
-      navigate('/dashboard');
+      navigate('/my-surveys');
     } catch (err: any) {
       showToast(err.response?.data?.message || 'אימייל או סיסמה שגויים', 'error');
     } finally {

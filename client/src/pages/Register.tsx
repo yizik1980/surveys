@@ -57,7 +57,7 @@ export default function Register() {
       });
       setAuth(res.data.token, res.data.user);
       showToast('נרשמת בהצלחה!', 'success');
-      navigate('/dashboard');
+      navigate('/my-surveys');
     } catch (err: any) {
       showToast(err.response?.data?.message || 'שגיאה בהרשמה', 'error');
     } finally {
