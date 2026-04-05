@@ -5,7 +5,6 @@ export const PRICING = {
     billingNote: 'מחויב מדי חודש, ניתן לביטול',
   },
   annual: {
-    pricePerMonth: 150,
     pricePerYear: 1800,
     label: 'שנתי',
     billingNote: 'מחויב שנתית',

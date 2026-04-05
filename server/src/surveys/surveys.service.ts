@@ -136,6 +136,32 @@ export class SurveysService {
     return { assigned: newAssignments.length };
   }
 
+  async findAssignedToUser(email: string) {
+    const surveys = await this.surveyModel
+      .find({ 'assignedUsers.email': email.toLowerCase() })
+      .select('title description assignedUsers status createdAt')
+      .lean<(SurveyDocument & { createdAt: Date })[]>();
+
+    return surveys.map((s) => {
+      const assignment = s.assignedUsers.find(
+        (u) => u.email.toLowerCase() === email.toLowerCase(),
+      );
+      return {
+        _id: s._id,
+        title: s.title,
+        description: s.description,
+        status: s.status,
+        createdAt: s.createdAt,
+        assignment: {
+          token: assignment?.token,
+          status: assignment?.status,
+          sentAt: assignment?.sentAt,
+          respondedAt: assignment?.respondedAt,
+        },
+      };
+    });
+  }
+
   async getStats(userId: string, role: string) {
     const query: any = role === 'admin' ? {} : { creator: new Types.ObjectId(userId) };
     const total = await this.surveyModel.countDocuments(query);

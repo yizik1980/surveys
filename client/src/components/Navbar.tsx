@@ -10,7 +10,7 @@ export default function Navbar() {
   const links = [
     { to: '/dashboard', label: 'לוח בקרה', show: true },
     { to: '/surveys', label: 'סקרים', show: isSurveyor.value },
-    { to: '/crm', label: 'CRM', show: isSurveyor.value },
+    { to: '/crm', label: 'CRM', show: true },
     { to: '/users', label: 'ניהול משתמשים', show: isAdmin.value },
   ];
 

@@ -36,7 +36,7 @@ type Step = 'personal' | 'plan' | 'payment';
 
 const PLANS = {
   monthly: { label: PRICING.monthly.label, priceLabel: `₪${PRICING.monthly.pricePerMonth} / חודש`, badge: null },
-  annual:  { label: PRICING.annual.label,  priceLabel: `₪${PRICING.annual.pricePerMonth} / חודש`, badge: PRICING.annual.badge },
+  annual:  { label: PRICING.annual.label,  priceLabel: `₪${PRICING.annual.pricePerYear} / שנתי`, badge: PRICING.annual.badge },
 } as const;
 
 // ─── helpers ──────────────────────────────────────────────────────────────────

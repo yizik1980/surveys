@@ -107,16 +107,16 @@ function HeroSlider() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                to="/register/surveyor"
+                to="/register"
                 className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl text-lg font-bold hover:bg-yellow-300 transition-colors shadow-lg text-center"
               >
-                הרשם כסוקר עכשיו
+               הצטרף עכשיו
               </Link>
               <Link
                 to="/login"
                 className="bg-white/10 text-white border border-white/30 px-8 py-4 rounded-xl text-lg font-medium hover:bg-white/20 transition-colors text-center"
               >
-                כניסה לסוקרים
+               כניסה לחשבון
               </Link>
             </div>
           </div>
@@ -218,13 +218,13 @@ export default function Landing() {
           <span className="font-bold text-xl">📊 מערכת סקרים</span>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-indigo-200 hover:text-white text-sm font-medium">
-              כניסה לסוקרים
+              כניסה לחשבון
             </Link>
             <Link
-              to="/register/surveyor"
+              to="/register"
               className="bg-white text-indigo-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-50 transition-colors"
             >
-              הרשמה כסוקר
+             הרשם 
             </Link>
           </div>
         </div>
@@ -276,7 +276,7 @@ export default function Landing() {
                 ))}
               </ul>
               <Link
-                to="/register/surveyor"
+                to="/register"
                 className="block text-center bg-gray-900 text-white py-3 rounded-xl font-semibold hover:bg-gray-700 transition-colors"
               >
                 התחל עכשיו
@@ -291,8 +291,8 @@ export default function Landing() {
               <p className="font-bold text-gray-900 text-xl mb-1">שנתי</p>
               <p className="text-gray-400 text-sm mb-6">{PRICING.annual.billingNote} — ₪{PRICING.annual.pricePerYear.toLocaleString()} / שנה</p>
               <div className="mb-6">
-                <span className="text-5xl font-bold text-indigo-700">₪{PRICING.annual.pricePerMonth}</span>
-                <span className="text-gray-400 text-sm"> / חודש</span>
+                <span className="text-5xl font-bold text-indigo-700">₪{PRICING.annual.pricePerYear}</span>
+                <span className="text-gray-400 text-sm"> / שנתי</span>
               </div>
               <ul className="space-y-2.5 text-sm text-gray-600 mb-8">
                 {['סקרים ללא הגבלה', 'עד 1,000 מוענים לסקר', 'ניתוחים וסטטיסטיקות', 'תמיכה בדוא"ל + טלפון'].map((f) => (
@@ -302,7 +302,7 @@ export default function Landing() {
                 ))}
               </ul>
               <Link
-                to="/register/surveyor"
+                to="/register"
                 className="block text-center bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
               >
                 התחל עכשיו

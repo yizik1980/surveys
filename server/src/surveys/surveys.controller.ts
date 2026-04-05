@@ -28,6 +28,13 @@ export class SurveysController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('my-assignments')
+  @Roles('surveyed')
+  getMyAssignments(@Request() req) {
+    return this.surveysService.findAssignedToUser(req.user.email);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
   @Roles('admin', 'surveyor')
   findAll(

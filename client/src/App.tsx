@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSignals } from '@preact/signals-react/runtime';
-import { isAuthenticated, isAdmin, toastMessage } from './store/signals';
+import { isAuthenticated, isAdmin, isSurveyor, toastMessage } from './store/signals';
 import Navbar from './components/Navbar';
 import Toast from './components/Toast';
 import Landing from './pages/Landing';
@@ -26,6 +26,13 @@ function PrivateRoute({ children }: { children: ReactNode }) {
 function AdminRoute({ children }: { children: ReactNode }) {
   useSignals();
   if (!isAdmin.value) return <Navigate to="/admin" replace />;
+  return <>{children}</>;
+}
+
+function SurveyorRoute({ children }: { children: ReactNode }) {
+  useSignals();
+  if (!isAuthenticated.value) return <Navigate to="/login" replace />;
+  if (!isSurveyor.value) return <Navigate to="/crm" replace />;
   return <>{children}</>;
 }
 
@@ -65,25 +72,25 @@ export default function App() {
         <Route
           path="/surveys"
           element={
-            <PrivateRoute>
+            <SurveyorRoute>
               <><Navbar /><SurveyList /></>
-            </PrivateRoute>
+            </SurveyorRoute>
           }
         />
         <Route
           path="/surveys/new"
           element={
-            <PrivateRoute>
+            <SurveyorRoute>
               <><Navbar /><SurveyBuilder /></>
-            </PrivateRoute>
+            </SurveyorRoute>
           }
         />
         <Route
           path="/surveys/:id/edit"
           element={
-            <PrivateRoute>
+            <SurveyorRoute>
               <><Navbar /><SurveyBuilder /></>
-            </PrivateRoute>
+            </SurveyorRoute>
           }
         />
         <Route

@@ -23,6 +23,8 @@ export const surveysApi = {
 
   getResponseStats: (id: string) => api.get(`/responses/survey/${id}/stats`),
 
+  getMyAssignments: () => api.get('/surveys/my-assignments'),
+
   submitResponse: (token: string, answers: Array<{ questionId: string; value: any }>) =>
     api.post('/responses', { token, answers }),
 };
