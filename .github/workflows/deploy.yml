@@ -1,0 +1,106 @@
+name: Build & Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_SERVER_REPO: ${{ vars.ECR_SERVER_REPO }}
+  ECR_CLIENT_REPO: ${{ vars.ECR_CLIENT_REPO }}
+
+jobs:
+  build-and-deploy:
+    name: Build, Push & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+      # ── Server ────────────────────────────────────────────────────────────
+      - name: Build & push server image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.tag.outputs.IMAGE_TAG }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_SERVER_REPO:$IMAGE_TAG \
+                       -t $ECR_REGISTRY/$ECR_SERVER_REPO:latest \
+                       ./server
+          docker push $ECR_REGISTRY/$ECR_SERVER_REPO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_SERVER_REPO:latest
+
+      # ── Client ────────────────────────────────────────────────────────────
+      - name: Build & push client image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.tag.outputs.IMAGE_TAG }}
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=${{ vars.VITE_API_URL }} \
+            -t $ECR_REGISTRY/$ECR_CLIENT_REPO:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_CLIENT_REPO:latest \
+            ./client
+          docker push $ECR_REGISTRY/$ECR_CLIENT_REPO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_CLIENT_REPO:latest
+
+      # ── Deploy to EC2 ────────────────────────────────────────────────────
+      - name: Deploy to EC2
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.tag.outputs.IMAGE_TAG }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: ECR_REGISTRY,ECR_SERVER_REPO,ECR_CLIENT_REPO,IMAGE_TAG,AWS_REGION
+          script: |
+            # Authenticate Docker with ECR
+            aws ecr get-login-password --region $AWS_REGION \
+              | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+            # Pull latest images
+            docker pull $ECR_REGISTRY/$ECR_SERVER_REPO:$IMAGE_TAG
+            docker pull $ECR_REGISTRY/$ECR_CLIENT_REPO:$IMAGE_TAG
+
+            # Write env file for docker-compose
+            cat > /opt/surveys/.env <<EOF
+            ECR_REGISTRY=$ECR_REGISTRY
+            ECR_SERVER_REPO=$ECR_SERVER_REPO
+            ECR_CLIENT_REPO=$ECR_CLIENT_REPO
+            IMAGE_TAG=$IMAGE_TAG
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_EXPIRES_IN=${{ vars.JWT_EXPIRES_IN }}
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ vars.SMTP_PORT }}
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASS=${{ secrets.SMTP_PASS }}
+            EMAIL_FROM=${{ vars.EMAIL_FROM }}
+            APP_URL=${{ vars.APP_URL }}
+            EOF
+
+            # Copy docker-compose and bring up
+            cp /opt/surveys/docker-compose.yml /tmp/docker-compose.yml || true
+            cd /opt/surveys
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            # Clean up old images
+            docker image prune -f

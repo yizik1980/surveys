@@ -1,0 +1,34 @@
+services:
+  server:
+    image: ${ECR_REGISTRY}/${ECR_SERVER_REPO}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: ${MONGODB_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      APP_URL: ${APP_URL}
+      SERVER_PORT: 3001
+    ports:
+      - "3001:3001"
+    networks:
+      - surveys-net
+
+  client:
+    image: ${ECR_REGISTRY}/${ECR_CLIENT_REPO}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - surveys-net
+
+networks:
+  surveys-net:
+    driver: bridge
