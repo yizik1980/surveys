@@ -76,10 +76,12 @@ export default function Login() {
           </p>
         </form>
 
-        <div className="mt-6 card bg-blue-50 border-blue-200 text-sm text-blue-800">
-          <p className="font-semibold mb-2">👤 כניסה לדוגמה:</p>
-          <p>ניתן ליצור חשבון מנהל ראשון דרך ה-API ישירות.</p>
-        </div>
+        <p className="text-center text-xs text-gray-400 mt-4">
+          סוקר?{' '}
+          <Link to="/login/surveyor" className="text-indigo-500 hover:underline">
+            כניסה לפורטל סוקרים
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SurveyorRegister from './pages/SurveyorRegister';
+import SurveyorLogin from './pages/SurveyorLogin';
 import Dashboard from './pages/Dashboard';
 import SurveyList from './pages/SurveyList';
 import SurveyBuilder from './pages/SurveyBuilder';
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register/surveyor" element={<SurveyorRegister />} />
+        <Route path="/login/surveyor" element={<SurveyorLogin />} />
         <Route path="/survey/:token" element={<SurveyResponse />} />
 
         {/* Admin */}

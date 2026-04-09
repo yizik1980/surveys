@@ -1,24 +1,25 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useSignals } from '@preact/signals-react/runtime';
-import { currentUser, isAdmin, isSurveyor, clearAuth } from '../store/signals';
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useSignals } from "@preact/signals-react/runtime";
+import { currentUser, isAdmin, isSurveyor, clearAuth } from "../store/signals";
 
 export default function Navbar() {
   useSignals();
   const navigate = useNavigate();
   const location = useLocation();
-  const crmActive = isSurveyor.value || isAdmin.value
+  const crmActive = isSurveyor.value || isAdmin.value;
+  console.log("isSurveyor:", isSurveyor.value, "isAdmin:", isAdmin.value);
   const links = [
-    { to: '/dashboard', label: 'לוח בקרה', show: crmActive },
-    { to: '/surveys', label: 'סקרים', show: crmActive },
-    { to: '/crm', label: 'CRM', show: crmActive },
-    { to: '/my-surveys', label: 'הסקרים שלי', show: !crmActive },
-    { to: '/users', label: 'ניהול משתמשים', show: isAdmin.value },
+    { to: "/dashboard", label: "לוח בקרה", show: crmActive },
+    { to: "/surveys", label: "סקרים", show: crmActive },
+    { to: "/crm", label: "CRM", show: crmActive },
+    { to: "/my-surveys", label: "הסקרים שלי", show: !crmActive },
+    { to: "/users", label: "ניהול משתמשים", show: isAdmin.value },
   ];
 
   const roleLabel: Record<string, string> = {
-    admin: 'מנהל',
-    surveyor: 'סוקר',
-    surveyed: 'נסקר',
+    admin: "מנהל",
+    surveyor: "סוקר",
+    surveyed: "נסקר",
   };
 
   return (
@@ -37,8 +38,8 @@ export default function Navbar() {
                   to={l.to}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     location.pathname.startsWith(l.to)
-                      ? 'bg-indigo-900'
-                      : 'hover:bg-indigo-600'
+                      ? "bg-indigo-900"
+                      : "hover:bg-indigo-600"
                   }`}
                 >
                   {l.label}
@@ -51,10 +52,14 @@ export default function Navbar() {
             {currentUser.value?.firstName} {currentUser.value?.lastName}
           </span>
           <span className="badge bg-indigo-500 text-white text-xs px-2 py-1 rounded-full">
-            {roleLabel[currentUser.value?.role || ''] || currentUser.value?.role}
+            {roleLabel[currentUser.value?.role || ""] ||
+              currentUser.value?.role}
           </span>
           <button
-            onClick={() => { clearAuth(); navigate('/login'); }}
+            onClick={() => {
+              clearAuth();
+              navigate("/login");
+            }}
             className="text-sm text-indigo-200 hover:text-white transition-colors"
           >
             יציאה

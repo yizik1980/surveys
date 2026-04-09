@@ -17,7 +17,20 @@ export const surveysApi = {
   assign: (id: string, recipients: Array<{ email: string; name?: string }>) =>
     api.post(`/surveys/${id}/assign`, { recipients }),
 
-  getStats: () => api.get('/surveys/stats'),
+  getStats: async () => {
+    const CACHE_KEY = 'surveys_stats_cache';
+    const TTL_MS = 5 * 60 * 1000; // 5 minutes
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached);
+      if (Date.now() - ts < TTL_MS) {
+        return { data };
+      }
+    }
+    const res = await api.get('/surveys/stats');
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: res.data, ts: Date.now() }));
+    return res;
+  },
 
   getResponses: (id: string) => api.get(`/responses/survey/${id}`),
 

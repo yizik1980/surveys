@@ -18,7 +18,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       clearAuth();
       
-      //window.location.href = '/login';
+      window.location.href = '/';
     }
     return Promise.reject(err);
   },
